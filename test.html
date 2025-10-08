@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Prueba Firebase Auth</title>
+</head>
+<body>
+    <h1>Prueba de Autenticación con Cloud Functions</h1>
+    <button id="testButton">Probar Llamada a la Nube</button>
+    <p>Resultado: <span id="result">Esperando...</span></p>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+
+        // --- IMPORTANTE: USA LA CONFIG DE TU NUEVO PROYECTO 'tim3break-test' ---
+        const firebaseConfig = {
+  		apiKey: "AIzaSyBdnimTONQ0xILt3go23lYHHqYR-cyPd7k",
+ 	 	authDomain: "tim3break-test.firebaseapp.com",
+ 		 projectId: "tim3break-test",
+ 		 storageBucket: "tim3break-test.firebasestorage.app",
+ 		 messagingSenderId: "120649053773",
+  	         appId: "1:120649053773:web:6aec71fb91b56974120e04",
+ 		 measurementId: "G-7LKFHSFM05"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app, 'us-central1'); // Especificamos la región
+
+        const testButton = document.getElementById('testButton');
+        const resultSpan = document.getElementById('result');
+
+        testButton.addEventListener('click', async () => {
+            try {
+                resultSpan.textContent = 'Autenticando anónimamente...';
+                await signInAnonymously(auth);
+                console.log('Usuario anónimo:', auth.currentUser.uid);
+                
+                resultSpan.textContent = 'Llamando a la Cloud Function...';
+                if (auth.currentUser) {
+                    await auth.currentUser.getIdToken(true); // Forzamos token
+                }
+
+                const helloWorld = httpsCallable(functions, 'helloWorld');
+                const result = await helloWorld({ text: 'mensaje de prueba' });
+
+                resultSpan.textContent = 'Éxito: ' + result.data.message;
+                resultSpan.style.color = 'green';
+                console.log('Respuesta de la función:', result.data);
+
+            } catch (error) {
+                resultSpan.textContent = 'Error: ' + error.message;
+                resultSpan.style.color = 'red';
+                console.error('Error detallado:', error);
+            }
+        });
+    </script>
+</body>
+</html>
